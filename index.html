@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GameHub — Snake</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: #f1f5f9;
+  }
+
+  .card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 1.25rem;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  .logo span { color: #1D9E75; }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 1.25rem;
+    color: #f1f5f9;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 5px;
+    margin-top: 14px;
+  }
+
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 9px 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input:focus { border-color: #1D9E75; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #f1f5f9;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #273549; }
+  .btn.primary { background: #1D9E75; border-color: #0F6E56; color: #fff; }
+  .btn.primary:hover { background: #0F6E56; }
+
+  .link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #1D9E75;
+    cursor: pointer;
+  }
+  .link:hover { text-decoration: underline; }
+
+  .err {
+    min-height: 20px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #f87171;
+    text-align: center;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Game ── */
+  #game-screen .card { max-width: 460px; }
+
+  #game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  #game-header .logo { margin: 0; font-size: 18px; }
+  #score-display { font-size: 20px; font-weight: 600; color: #1D9E75; }
+
+  #canvas-wrap {
+    background: #020617;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    padding: 8px;
+    border: 1px solid #1e3a2f;
+  }
+
+  canvas { display: block; image-rendering: pixelated; }
+
+  #game-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+  #game-msg { font-size: 13px; color: #94a3b8; }
+
+  .ctrl-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #f1f5f9;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+  .ctrl-btn:hover { background: #1e293b; }
+  .ctrl-btn.green { background: #1D9E75; border-color: #0F6E56; color: #fff; }
+  .ctrl-btn.green:hover { background: #0F6E56; }
+
+  .dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+    gap: 5px;
+    justify-content: center;
+    margin-top: 14px;
+  }
+  .dpad button {
+    width: 40px; height: 40px;
+    font-size: 16px;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #f1f5f9;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dpad button:hover { background: #1e293b; }
+  .dpad button:active { background: #1D9E75; }
+  .dpad .empty { visibility: hidden; }
+
+  #leaderboard {
+    margin-top: 18px;
+    border-top: 1px solid #334155;
+    padding-top: 14px;
+  }
+  #leaderboard h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .lb-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+  }
+  .lb-rank { color: #64748b; width: 24px; }
+  .lb-me { color: #1D9E75; font-weight: 600; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #64748b;
+    border: 1px solid #334155;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIGN UP -->
+<div id="signup-screen" class="screen active">
+  <div class="card">
+    <div class="logo">⎈ Game<span>Hub</span></div>
+    <h2>Create account</h2>
+    <label>Username</label>
+    <input type="text" id="su-user" placeholder="choose a username" autocomplete="username" />
+    <label>Password</label>
+    <input type="password" id="su-pass" placeholder="at least 4 characters" autocomplete="new-password" />
+    <label>Confirm password</label>
+    <input type="password" id="su-pass2" placeholder="repeat password" autocomplete="new-password" />
+    <div class="err" id="su-err"></div>
+    <button class="btn primary" onclick="doSignup()">Sign Up</button>
+    <span class="link" onclick="showScreen('login-screen')">Already have an account? Log in →</span>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen">
+  <div class="card">
+    <div class="logo">⎈ Game<span>Hub</span></div>
+    <h2>Welcome back</h2>
+    <label>Username</label>
+    <input type="text" id="li-user" placeholder="your username" autocomplete="username" />
+    <label>Password</label>
+    <input type="password" id="li-pass" placeholder="your password" autocomplete="current-password" />
+    <div class="err" id="li-err"></div>
+    <button class="btn primary" onclick="doLogin()">Login</button>
+    <span class="link" onclick="showScreen('signup-screen')">No account? Sign up →</span>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="card">
+    <div id="game-header">
+      <div class="logo">⎈ Game<span>Hub</span> <span class="badge" id="user-badge">guest</span></div>
+      <div id="score-display">Score: 0</div>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="snake" width="300" height="300"></canvas>
+    </div>
+    <div id="game-controls">
+      <span id="game-msg">Press Start to play</span>
+      <div>
+        <button class="ctrl-btn green" onclick="toggleGame()" id="start-btn">▶ Start</button>
+        <button class="ctrl-btn" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+    <div class="dpad">
+      <button class="empty"></button>
+      <button onclick="dir('UP')" aria-label="up">▲</button>
+      <button class="empty"></button>
+      <button onclick="dir('LEFT')" aria-label="left">◀</button>
+      <button class="empty"></button>
+      <button onclick="dir('RIGHT')" aria-label="right">▶</button>
+      <button class="empty"></button>
+      <button onclick="dir('DOWN')" aria-label="down">▼</button>
+      <button class="empty"></button>
+    </div>
+    <div id="leaderboard">
+      <h3>🏆 Leaderboard</h3>
+      <div id="lb-rows"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── "Database" (localStorage) ──────────────────────────────
+const DB = {
+  get users() { return JSON.parse(localStorage.getItem('gh_users') || '{}'); },
+  get scores() { return JSON.parse(localStorage.getItem('gh_scores') || '{}'); },
+  saveUsers(u) { localStorage.setItem('gh_users', JSON.stringify(u)); },
+  saveScores(s) { localStorage.setItem('gh_scores', JSON.stringify(s)); },
+  addUser(username, password) {
+    const u = this.users; u[username] = password; this.saveUsers(u);
+    const s = this.scores; if (!s[username]) { s[username] = 0; this.saveScores(s); }
+  },
+  checkUser(username, password) {
+    return this.users[username] === password;
+  },
+  updateScore(username, score) {
+    const s = this.scores;
+    if (score > (s[username] || 0)) { s[username] = score; this.saveScores(s); return true; }
+    return false;
+  }
+};
+
+// ── Auth ───────────────────────────────────────────────────
+let currentUser = null;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function doSignup() {
+  const u = document.getElementById('su-user').value.trim();
+  const p = document.getElementById('su-pass').value;
+  const p2 = document.getElementById('su-pass2').value;
+  const err = document.getElementById('su-err');
+  if (!u || u.length < 2) { err.textContent = 'Username must be at least 2 characters'; return; }
+  if (p.length < 4) { err.textContent = 'Password must be at least 4 characters'; return; }
+  if (p !== p2) { err.textContent = 'Passwords do not match'; return; }
+  if (DB.users[u]) { err.textContent = 'Username already taken'; return; }
+  err.textContent = '';
+  DB.addUser(u, p);
+  currentUser = u;
+  enterGame();
+}
+
+function doLogin() {
+  const u = document.getElementById('li-user').value.trim();
+  const p = document.getElementById('li-pass').value;
+  const err = document.getElementById('li-err');
+  if (!DB.checkUser(u, p)) { err.textContent = 'Invalid username or password'; return; }
+  err.textContent = '';
+  currentUser = u;
+  enterGame();
+}
+
+function doLogout() {
+  stopGame();
+  currentUser = null;
+  showScreen('login-screen');
+}
+
+function enterGame() {
+  document.getElementById('user-badge').textContent = currentUser;
+  showScreen('game-screen');
+  renderLeaderboard();
+  initGame();
+}
+
+// ── Snake Game ─────────────────────────────────────────────
+const COLS = 15, ROWS = 15, CELL = 20;
+const canvas = document.getElementById('snake');
+const ctx = canvas.getContext('2d');
+
+let snake, dirCur, dirNext, food, score, running, loop;
+
+function initGame() {
+  snake = [{x:7,y:7},{x:6,y:7},{x:5,y:7}];
+  dirCur = {x:1,y:0}; dirNext = {x:1,y:0};
+  score = 0;
+  running = false;
+  placeFood();
+  draw();
+  document.getElementById('score-display').textContent = 'Score: 0';
+  document.getElementById('game-msg').textContent = 'Use arrow keys or d-pad';
+  document.getElementById('start-btn').textContent = '▶ Start';
+}
+
+function placeFood() {
+  do {
+    food = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+  } while (snake.some(s => s.x === food.x && s.y === food.y));
+}
+
+function draw() {
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
+
+  // Grid dots
+  ctx.fillStyle = '#0f172a';
+  for (let x = 0; x < COLS; x++)
+    for (let y = 0; y < ROWS; y++) {
+      ctx.beginPath();
+      ctx.arc(x * CELL + CELL/2, y * CELL + CELL/2, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  // Snake
+  snake.forEach((s, i) => {
+    const alpha = i === 0 ? 1 : Math.max(0.35, 1 - i * 0.05);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = i === 0 ? '#1D9E75' : '#0F6E56';
+    ctx.beginPath();
+    ctx.roundRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2, 5);
+    ctx.fill();
+    if (i === 0) {
+      ctx.fillStyle = '#020617';
+      const ex = s.x * CELL + (dirCur.x === 1 ? 14 : dirCur.x === -1 ? 4 : 6);
+      const ey = s.y * CELL + (dirCur.y === 1 ? 14 : dirCur.y === -1 ? 4 : 6);
+      ctx.beginPath(); ctx.arc(ex, ey, 2, 0, Math.PI*2); ctx.fill();
+    }
+  });
+  ctx.globalAlpha = 1;
+
+  // Food (pulsing red)
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(food.x * CELL + CELL/2, food.y * CELL + CELL/2, CELL/2 - 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fca5a5';
+  ctx.beginPath();
+  ctx.arc(food.x * CELL + CELL/2 - 2, food.y * CELL + CELL/2 - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function step() {
+  dirCur = dirNext;
+  const head = { x: snake[0].x + dirCur.x, y: snake[0].y + dirCur.y };
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS ||
+      snake.some(s => s.x === head.x && s.y === head.y)) {
+    gameOver(); return;
+  }
+  snake.unshift(head);
+  if (head.x === food.x && head.y === food.y) {
+    score += 10;
+    document.getElementById('score-display').textContent = 'Score: ' + score;
+    placeFood();
+  } else { snake.pop(); }
+  draw();
+}
+
+function dir(d) {
+  if (d === 'UP'    && dirCur.y !== 1)  dirNext = {x:0,  y:-1};
+  if (d === 'DOWN'  && dirCur.y !== -1) dirNext = {x:0,  y:1};
+  if (d === 'LEFT'  && dirCur.x !== 1)  dirNext = {x:-1, y:0};
+  if (d === 'RIGHT' && dirCur.x !== -1) dirNext = {x:1,  y:0};
+}
+
+function toggleGame() {
+  stopGame();
+  startGame();
+}
+
+function startGame() {
+  initGame();
+  running = true;
+  loop = setInterval(step, 140);
+  document.getElementById('start-btn').textContent = '↺ Restart';
+}
+
+function stopGame() {
+  running = false;
+  clearInterval(loop);
+}
+
+function gameOver() {
+  stopGame();
+  document.getElementById('game-msg').textContent = 'Game over! Final score: ' + score;
+  document.getElementById('start-btn').textContent = '▶ Play again';
+  const isNewBest = DB.updateScore(currentUser, score);
+  renderLeaderboard();
+
+  ctx.fillStyle = 'rgba(2,6,23,0.75)';
+  ctx.fillRect(0, 0, COLS*CELL, ROWS*CELL);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f1f5f9';
+  ctx.font = '600 18px sans-serif';
+  ctx.fillText('Game Over', COLS*CELL/2, ROWS*CELL/2 - 20);
+  ctx.fillStyle = '#1D9E75';
+  ctx.font = '600 26px sans-serif';
+  ctx.fillText('Score: ' + score, COLS*CELL/2, ROWS*CELL/2 + 12);
+  if (isNewBest && score > 0) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '500 13px sans-serif';
+    ctx.fillText('New personal best!', COLS*CELL/2, ROWS*CELL/2 + 38);
+  }
+}
+
+function renderLeaderboard() {
+  const rows = Object.entries(DB.scores).sort((a,b) => b[1]-a[1]).slice(0,8);
+  const el = document.getElementById('lb-rows');
+  if (!rows.length) {
+    el.innerHTML = '<div class="lb-row"><span style="color:#64748b">No scores yet — be the first!</span></div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = rows.map(([u, s], i) =>
+    `<div class="lb-row">
+      <span class="lb-rank">${medals[i] || (i+1)+'.'}</span>
+      <span class="${u === currentUser ? 'lb-me' : ''}">${u}${u === currentUser ? ' (you)' : ''}</span>
+      <span style="font-weight:500">${s}</span>
+    </div>`
+  ).join('');
+}
+
+// Keyboard controls
+document.addEventListener('keydown', e => {
+  const map = { ArrowUp:'UP', ArrowDown:'DOWN', ArrowLeft:'LEFT', ArrowRight:'RIGHT' };
+  if (map[e.key]) { e.preventDefault(); dir(map[e.key]); }
+  if (e.key === ' ') { e.preventDefault(); toggleGame(); }
+});
+
+// Enter to submit forms
+document.getElementById('su-pass2').addEventListener('keydown', e => { if (e.key==='Enter') doSignup(); });
+document.getElementById('li-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+
+initGame();
+</script>
+</body>
+</html>
